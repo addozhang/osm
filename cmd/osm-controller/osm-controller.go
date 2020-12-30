@@ -148,7 +148,7 @@ func main() {
 	kubeClient := kubernetes.NewForConfigOrDie(kubeConfig)
 
 	// Initialize the generic Kubernetes event recorder and associate it with the osm-controller pod resource
-	/*controllerPod, err := getOSMControllerPod(kubeClient)
+	controllerPod, err := getOSMControllerPod(kubeClient)
 	if err != nil {
 		log.Fatal().Msg("Error fetching osm-controller pod")
 	}
@@ -160,7 +160,7 @@ func main() {
 	// This ensures CLI parameters (and dependent values) are correct.
 	if err := validateCLIParams(); err != nil {
 		events.GenericEventRecorder().FatalEvent(err, events.InvalidCLIParameters, "Error validating CLI parameters")
-	}*/
+	}
 
 	stop := signals.RegisterExitHandlers()
 	ctx, cancel := context.WithCancel(context.Background())
