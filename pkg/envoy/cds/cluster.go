@@ -1,6 +1,8 @@
 package cds
 
 import (
+	"fmt"
+	"github.com/openservicemesh/osm/pkg/certificate"
 	"time"
 
 	xds_cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
@@ -33,16 +35,19 @@ func getUpstreamServiceCluster(upstreamSvc, downstreamSvc service.MeshService, c
 	}
 
 	remoteCluster := &xds_cluster.Cluster{
-		Name:           clusterName,
-		ConnectTimeout: ptypes.DurationProto(clusterConnectTimeout),
-		TransportSocket: &xds_core.TransportSocket{
+		Name:                 clusterName,
+		ConnectTimeout:       ptypes.DurationProto(clusterConnectTimeout),
+		ProtocolSelection:    xds_cluster.Cluster_USE_DOWNSTREAM_PROTOCOL,
+		Http2ProtocolOptions: &xds_core.Http2ProtocolOptions{},
+	}
+
+	if cfg.IsClusterTLSEnabled() {
+		remoteCluster.TransportSocket = &xds_core.TransportSocket{
 			Name: wellknown.TransportSocketTls,
 			ConfigType: &xds_core.TransportSocket_TypedConfig{
 				TypedConfig: marshalledUpstreamTLSContext,
 			},
-		},
-		ProtocolSelection:    xds_cluster.Cluster_USE_DOWNSTREAM_PROTOCOL,
-		Http2ProtocolOptions: &xds_core.Http2ProtocolOptions{},
+		}
 	}
 
 	if cfg.IsPermissiveTrafficPolicyMode() {
@@ -74,7 +79,7 @@ func getOutboundPassthroughCluster() *xds_cluster.Cluster {
 }
 
 // getLocalServiceCluster returns an Envoy Cluster corresponding to the local service
-func getLocalServiceCluster(catalog catalog.MeshCataloger, proxyServiceName service.MeshService, clusterName string) (*xds_cluster.Cluster, error) {
+func getLocalServiceCluster(catalog catalog.MeshCataloger, cn certificate.CommonName, clusterName string) (*xds_cluster.Cluster, error) {
 	xdsCluster := xds_cluster.Cluster{
 		// The name must match the domain being cURLed in the demo
 		Name:           clusterName,
@@ -97,13 +102,15 @@ func getLocalServiceCluster(catalog catalog.MeshCataloger, proxyServiceName serv
 		Http2ProtocolOptions: &xds_core.Http2ProtocolOptions{},
 	}
 
-	endpoints, err := catalog.ListEndpointsForService(proxyServiceName)
-	if err != nil {
-		log.Error().Err(err).Msgf("Failed to get endpoints for service %s", proxyServiceName)
-		return nil, err
+	//ignore err due to checked above
+	//use targetPort of kubernetes service as local service cluster port
+	kubernetesSvcList, _ := catalog.GetKubernetesServicesFromEnvoyCertificate(cn)
+	if len(kubernetesSvcList) == 0 {
+		return nil, fmt.Errorf("no service found for %s", cn.String())
 	}
+	endpointPorts := kubernetesSvcList[0].Spec.Ports
 
-	for _, ep := range endpoints {
+	for _, endpointPort := range endpointPorts {
 		localityEndpoint := &xds_endpoint.LocalityLbEndpoints{
 			Locality: &xds_core.Locality{
 				Zone: "zone",
@@ -111,7 +118,7 @@ func getLocalServiceCluster(catalog catalog.MeshCataloger, proxyServiceName serv
 			LbEndpoints: []*xds_endpoint.LbEndpoint{{
 				HostIdentifier: &xds_endpoint.LbEndpoint_Endpoint{
 					Endpoint: &xds_endpoint.Endpoint{
-						Address: envoy.GetAddress(constants.WildcardIPAddr, uint32(ep.Port)),
+						Address: envoy.GetAddress(constants.WildcardIPAddr, uint32(endpointPort.TargetPort.IntVal)),
 					},
 				},
 				LoadBalancingWeight: &wrappers.UInt32Value{

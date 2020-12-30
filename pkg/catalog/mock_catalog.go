@@ -5,6 +5,7 @@
 package catalog
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -23,6 +24,14 @@ import (
 type MockMeshCataloger struct {
 	ctrl     *gomock.Controller
 	recorder *MockMeshCatalogerMockRecorder
+}
+
+func (m *MockMeshCataloger) GetKubernetesServicesFromEnvoyCertificate(name certificate.CommonName) ([]corev1.Service, error) {
+	panic("implement me")
+}
+
+func (m *MockMeshCataloger) GetPodFromCertificate(cn certificate.CommonName) (*corev1.Pod, error) {
+	panic("implement me")
 }
 
 // MockMeshCatalogerMockRecorder is the mock recorder for MockMeshCataloger

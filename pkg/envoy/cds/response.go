@@ -49,7 +49,7 @@ func NewResponse(meshCatalog catalog.MeshCataloger, proxy *envoy.Proxy, _ *xds_d
 	// Create a local cluster for the service.
 	// The local cluster will be used for incoming traffic.
 	localClusterName := envoy.GetLocalClusterNameForService(proxyServiceName)
-	localCluster, err := getLocalServiceCluster(meshCatalog, proxyServiceName, localClusterName)
+	localCluster, err := getLocalServiceCluster(meshCatalog, proxy.GetCommonName(), localClusterName)
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to get local cluster config for proxy %s", proxyServiceName)
 		return nil, err

@@ -98,7 +98,9 @@ var _ = Describe("CDS Response", func() {
 
 	Context("Test cds clusters", func() {
 		It("Returns a local cluster object", func() {
-			localCluster, err := getLocalServiceCluster(catalog, proxyService, envoy.GetLocalClusterNameForService(proxyService))
+			proxyUUID := uuid.New()
+			xdsCertificate := certificate.CommonName(fmt.Sprintf("%s.%s.%s.foo.bar", proxyUUID, proxyServiceAccountName, tests.Namespace))
+			localCluster, err := getLocalServiceCluster(catalog, xdsCertificate, envoy.GetLocalClusterNameForService(proxyService))
 			Expect(err).ToNot(HaveOccurred())
 
 			expectedClusterLoadAssignment := &xds_endpoint.ClusterLoadAssignment{

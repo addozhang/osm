@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"sync"
 	"time"
 
@@ -94,6 +95,12 @@ type MeshCataloger interface {
 
 	// GetServicesFromEnvoyCertificate returns a list of services the given Envoy is a member of based on the certificate provided, which is a cert issued to an Envoy for XDS communication (not Envoy-to-Envoy).
 	GetServicesFromEnvoyCertificate(certificate.CommonName) ([]service.MeshService, error)
+
+	// GetKubernetesServicesFromEnvoyCertificate return a list of Kubernetes services the given Envoy is a member of based on the certificate provided, which is a cert issued to an Envoy for XDS communication (not Envoy-to-Envoy).
+	GetKubernetesServicesFromEnvoyCertificate(certificate.CommonName) ([]corev1.Service, error)
+
+	// GetPodFromCertificate return pod of the given Envoy is a member of based on the certificate provided, which is a cert issued to an Envoy for XDS communication (not Envoy-to-Envoy).
+	GetPodFromCertificate(cn certificate.CommonName) (*corev1.Pod, error)
 
 	// RegisterProxy registers a newly connected proxy with the service mesh catalog.
 	RegisterProxy(*envoy.Proxy)

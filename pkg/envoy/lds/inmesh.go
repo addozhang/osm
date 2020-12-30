@@ -54,6 +54,14 @@ func (lb *listenerBuilder) getInboundMeshFilterChains(proxyService service.MeshS
 				continue // continue building filter chains for other ports on the service
 			}
 			filterChains = append(filterChains, filterChainForPort)
+			//passthrough filter chain
+			passthroughFilterChain, err := buildInboundPassthroughFilterChain(proxyService, port)
+			if err != nil {
+				log.Error().Err(err).Msgf("Error getting filter chain for Egress")
+				continue
+			}
+
+			filterChains = append(filterChains, passthroughFilterChain)
 
 		case tcpAppProtocol:
 			filterChainForPort, err := lb.getInboundMeshTCPFilterChain(proxyService, port)
@@ -259,7 +267,7 @@ func (lb *listenerBuilder) getOutboundFilterChainMatchForService(dstSvc service.
 	if protocol == httpAppProtocol {
 		// HTTP filter chain should only match on supported HTTP protocols that the downstream can use
 		// to originate a request.
-		filterMatch.ApplicationProtocols = supportedDownstreamHTTPProtocols
+		//filterMatch.ApplicationProtocols = supportedDownstreamHTTPProtocols TODO local fix to disable application protocols
 	}
 
 	endpoints, err := lb.meshCatalog.GetResolvableServiceEndpoints(dstSvc)

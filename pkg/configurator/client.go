@@ -27,6 +27,10 @@ const (
 	// enableDebugServer is the key name used for the debug server in the ConfigMap
 	enableDebugServer = "enable_debug_server"
 
+	enableClusterTLS = "enable_cluster_tls"
+
+	allowAccessViaIP = "allow_access_via_ip"
+
 	// prometheusScrapingKey is the key name used for prometheus scraping in the ConfigMap
 	prometheusScrapingKey = "prometheus_scraping"
 
@@ -189,6 +193,10 @@ type osmConfig struct {
 	// EnableDebugServer is a bool toggle, which enables/disables the debug server within the OSM Controller
 	EnableDebugServer bool `yaml:"enable_debug_server"`
 
+	EnableClusterTLS bool `yaml:"enable_cluster_tls"`
+
+	AllowAccessViaIP bool `yaml:"allow_access_via_ip"`
+
 	// PrometheusScraping is a bool toggle used to enable or disable metrics scraping by Prometheus
 	PrometheusScraping bool `yaml:"prometheus_scraping"`
 
@@ -260,6 +268,8 @@ func parseOSMConfigMap(configMap *v1.ConfigMap) *osmConfig {
 	osmConfigMap.PermissiveTrafficPolicyMode, _ = GetBoolValueForKey(configMap, PermissiveTrafficPolicyModeKey)
 	osmConfigMap.Egress, _ = GetBoolValueForKey(configMap, egressKey)
 	osmConfigMap.EnableDebugServer, _ = GetBoolValueForKey(configMap, enableDebugServer)
+	osmConfigMap.EnableClusterTLS, _ = GetBoolValueForKey(configMap, enableClusterTLS)
+	osmConfigMap.AllowAccessViaIP, _ = GetBoolValueForKey(configMap, allowAccessViaIP)
 	osmConfigMap.PrometheusScraping, _ = GetBoolValueForKey(configMap, prometheusScrapingKey)
 	osmConfigMap.UseHTTPSIngress, _ = GetBoolValueForKey(configMap, useHTTPSIngressKey)
 	osmConfigMap.TracingEnable, _ = GetBoolValueForKey(configMap, tracingEnableKey)

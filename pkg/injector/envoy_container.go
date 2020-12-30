@@ -83,5 +83,12 @@ func getEnvoySidecarContainerSpec(containerName, envoyImage, nodeID, clusterID s
 				},
 			},
 		},
+		Lifecycle: &corev1.Lifecycle{
+			PreStop: &corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"sh", "-c", "sleep 40"}, //preStop to hold termination flow
+				},
+			},
+		},
 	}
 }

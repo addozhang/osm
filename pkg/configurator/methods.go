@@ -62,6 +62,14 @@ func (c *Client) IsTracingEnabled() bool {
 	return c.getConfigMap().TracingEnable
 }
 
+func (c *Client) IsClusterTLSEnabled() bool {
+	return c.getConfigMap().EnableClusterTLS
+}
+
+func (c *Client) IsAllowAccessViaIP() bool {
+	return c.getConfigMap().AllowAccessViaIP
+}
+
 // GetTracingHost is the host to which we send tracing spans
 func (c *Client) GetTracingHost() string {
 	tracingAddress := c.getConfigMap().TracingAddress

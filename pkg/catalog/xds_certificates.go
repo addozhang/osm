@@ -42,6 +42,29 @@ func (mc *MeshCatalog) GetServicesFromEnvoyCertificate(cn certificate.CommonName
 	return meshServices, nil
 }
 
+// GetKubernetesServicesFromEnvoyCertificate return a list of Kubernetes services the given Envoy is a member of based on the certificate provided, which is a cert issued to an Envoy for XDS communication (not Envoy-to-Envoy).
+func (mc *MeshCatalog) GetKubernetesServicesFromEnvoyCertificate(cn certificate.CommonName) ([]v1.Service, error) {
+	pod, err := GetPodFromCertificate(cn, mc.kubeController)
+	if err != nil {
+		return nil, err
+	}
+
+	services, err := listServicesForPod(pod, mc.kubeController)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(services) == 0 {
+		return nil, err
+	}
+
+	// Remove services that have been split into other services.
+	// Filters out services referenced in TrafficSplit.spec.service
+	services = mc.filterTrafficSplitServices(services)
+
+	return services, nil
+}
+
 func kubernetesServicesToMeshServices(kubernetesServices []v1.Service) (meshServices []service.MeshService) {
 	for _, svc := range kubernetesServices {
 		meshServices = append(meshServices, service.MeshService{
@@ -95,6 +118,11 @@ func (mc *MeshCatalog) filterTrafficSplitServices(services []v1.Service) []v1.Se
 	}
 
 	return filteredServices
+}
+
+// GetPodFromCertificate return pod of the given Envoy is a member of based on the certificate provided, which is a cert issued to an Envoy for XDS communication (not Envoy-to-Envoy).
+func (mc *MeshCatalog) GetPodFromCertificate(cn certificate.CommonName) (*v1.Pod, error) {
+	return GetPodFromCertificate(cn, mc.kubeController)
 }
 
 // GetPodFromCertificate returns the Kubernetes Pod object for a given certificate.

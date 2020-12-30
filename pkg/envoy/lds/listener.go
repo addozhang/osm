@@ -7,6 +7,7 @@ import (
 	xds_tcp_proxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/openservicemesh/osm/pkg/constants"
 	"github.com/openservicemesh/osm/pkg/envoy"
@@ -45,11 +46,11 @@ func (lb *listenerBuilder) newOutboundListener() (*xds_listener.Listener, error)
 				// to its original destination.
 				Name: wellknown.OriginalDestination,
 			},
-			{
+			/*{ 	//TODO local fix to support non-http traffic proxy, or it will result in filter timeout (default 15s)
 				// The HttpInspector ListenerFilter is used to inspect plaintext traffic
 				// for HTTP protocols.
 				Name: wellknown.HttpInspector,
-			},
+			},*/
 		},
 	}, nil
 }
@@ -100,6 +101,33 @@ func buildPrometheusListener(connManager *xds_hcm.HttpConnectionManager) (*xds_l
 	}, nil
 }
 
+func buildInboundPassthroughFilterChain(proxyService service.MeshService, port uint32) (*xds_listener.FilterChain, error) {
+	tcpProxy := &xds_tcp_proxy.TcpProxy{
+		StatPrefix:       envoy.OutboundPassthroughCluster,
+		ClusterSpecifier: &xds_tcp_proxy.TcpProxy_Cluster{Cluster: envoy.OutboundPassthroughCluster},
+		//ClusterSpecifier: &xds_tcp_proxy.TcpProxy_Cluster{Cluster: envoy.GetLocalClusterNameForService(proxyService)},
+	}
+	marshalledTCPProxy, err := ptypes.MarshalAny(tcpProxy)
+	if err != nil {
+		log.Error().Err(err).Msgf("Error marshalling TcpProxy object for egress HTTPS filter chain")
+		return nil, err
+	}
+
+	return &xds_listener.FilterChain{
+		FilterChainMatch: &xds_listener.FilterChainMatch{
+			DestinationPort: &wrapperspb.UInt32Value{
+				Value: port,
+			},
+		},
+		Filters: []*xds_listener.Filter{
+			{
+				Name:       wellknown.TCPProxy,
+				ConfigType: &xds_listener.Filter_TypedConfig{TypedConfig: marshalledTCPProxy},
+			},
+		},
+	}, nil
+}
+
 func buildEgressFilterChain() (*xds_listener.FilterChain, error) {
 	tcpProxy := &xds_tcp_proxy.TcpProxy{
 		StatPrefix:       envoy.OutboundPassthroughCluster,
@@ -125,6 +153,28 @@ func buildEgressFilterChain() (*xds_listener.FilterChain, error) {
 func (lb *listenerBuilder) getOutboundFilterChains() ([]*xds_listener.FilterChain, error) {
 	// Create filter chain for upstream services
 	filterChains := lb.getOutboundFilterChainPerUpstream()
+	//var filterChains []*xds_listener.FilterChain
+
+	//local fix to add common filter for match all pods ip with Pod CIDR
+	commonFilter, err := lb.getOutboundHTTPFilter()
+	if err != nil {
+		log.Error().Err(err).Msg("Error getting common filter")
+		return nil, err
+	}
+	filterChains = append(filterChains, &xds_listener.FilterChain{
+		Name:    "internal-cluster",
+		Filters: []*xds_listener.Filter{commonFilter},
+		FilterChainMatch: &xds_listener.FilterChainMatch{
+			PrefixRanges: []*xds_core.CidrRange{
+				{
+					AddressPrefix: "10.128.0.0", //TODO pod CIDR
+					PrefixLen: &wrapperspb.UInt32Value{
+						Value: 12,
+					},
+				},
+			},
+		},
+	})
 
 	// Create filter chain for egress if egress is enabled
 	// This filterchain matches any traffic not filtered by allow rules, it will be treated as egress
@@ -187,11 +237,12 @@ func (lb *listenerBuilder) getOutboundFilterChainPerUpstream() []*xds_listener.F
 		}
 
 		// Construct TCP filter chain
+		/* TODO local fix to disable outbound tcp filter chain
 		if tcpFilterChain, err := lb.getOutboundTCPFilterChainForService(upstream); err != nil {
 			log.Error().Err(err).Msgf("Error constructing outbound TCP filter chain for upstream service %s on proxy with identity %s", upstream, lb.svcAccount)
 		} else {
 			filterChains = append(filterChains, tcpFilterChain)
-		}
+		}*/
 	}
 
 	return filterChains
