@@ -20,6 +20,11 @@ func NewResponse(meshCatalog catalog.MeshCataloger, proxy *envoy.Proxy, _ *xds_d
 		log.Error().Err(err).Msgf("Error looking up MeshService for Envoy with CN=%q", proxy.GetCommonName())
 		return nil, err
 	}
+
+	//local fix to avoid no service found bug
+	if len(svcList) == 0 {
+		return nil, err
+	}
 	// Github Issue #1575
 	proxyServiceName := svcList[0]
 
