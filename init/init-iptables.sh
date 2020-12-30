@@ -27,7 +27,7 @@ iptables -t nat -A PREROUTING -p tcp -j PROXY_INBOUND
 
 # Skip inbound SSH redirection
 iptables -t nat -A PROXY_INBOUND -p tcp --dport "${SSH_PORT}" -j RETURN
-iptables -t nat -A PROXY_INBOUND -p tcp --dport 5678 -j RETURN
+iptables -t nat -A PROXY_INBOUND -p tcp --dport 5678 -j RETURN #local fix to make java sidecar connectable
 # Skip inbound stats query redirection
 iptables -t nat -A PROXY_INBOUND -p tcp --dport "${PROXY_STATS_PORT}" -j RETURN
 # Redirect remaining inbound traffic to PROXY_INBOUND_PORT
@@ -50,7 +50,3 @@ iptables -t nat -A PROXY_OUTPUT -d 127.0.0.1/32 -j RETURN
 
 # Redirect remaining outbound traffic to Envoy
 iptables -t nat -A PROXY_OUTPUT -j PROXY_REDIRECT
-
-#iptables -t nat -L -v
-
-#iptables -t nat -L -v
