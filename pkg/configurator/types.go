@@ -44,12 +44,6 @@ type Configurator interface {
 	// IsTracingEnabled returns whether tracing is enabled
 	IsTracingEnabled() bool
 
-	// IsClusterTLSEnabled returns whether cluster force TLS
-	IsClusterTLSEnabled() bool
-
-	// IsAllowAccessViaIP returns whether inbound listener allows be accessed via server IP
-	IsAllowAccessViaIP() bool
-
 	// GetTracingHost is the host to which we send tracing spans
 	GetTracingHost() string
 

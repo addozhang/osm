@@ -17,14 +17,6 @@ type MockConfigurator struct {
 	recorder *MockConfiguratorMockRecorder
 }
 
-func (m *MockConfigurator) IsClusterTLSEnabled() bool {
-	panic("implement me")
-}
-
-func (m *MockConfigurator) IsAllowAccessViaIP() bool {
-	panic("implement me")
-}
-
 // MockConfiguratorMockRecorder is the mock recorder for MockConfigurator
 type MockConfiguratorMockRecorder struct {
 	mock *MockConfigurator
