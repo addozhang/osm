@@ -189,10 +189,6 @@ type osmConfig struct {
 	// EnableDebugServer is a bool toggle, which enables/disables the debug server within the OSM Controller
 	EnableDebugServer bool `yaml:"enable_debug_server"`
 
-	EnableClusterTLS bool `yaml:"enable_cluster_tls"`
-
-	AllowAccessViaIP bool `yaml:"allow_access_via_ip"`
-
 	// PrometheusScraping is a bool toggle used to enable or disable metrics scraping by Prometheus
 	PrometheusScraping bool `yaml:"prometheus_scraping"`
 
