@@ -2,8 +2,6 @@ package lds
 
 import (
 	"fmt"
-	"sort"
-
 	mapset "github.com/deckarep/golang-set"
 	xds_core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	xds_listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
@@ -13,6 +11,8 @@ import (
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"sort"
+	"strings"
 
 	"github.com/openservicemesh/osm/pkg/envoy"
 	"github.com/openservicemesh/osm/pkg/envoy/route"
@@ -49,6 +49,15 @@ func (lb *listenerBuilder) getInboundMeshFilterChains(proxyService service.MeshS
 				continue // continue building filter chains for other ports on the service
 			}
 			filterChains = append(filterChains, filterChainForPort)
+
+			//passthrough filter chain
+			passthroughFilterChain, err := buildInboundPassthroughFilterChain(proxyService, port)
+			if err != nil {
+				log.Error().Err(err).Msgf("Error getting filter chain for Egress")
+				continue
+			}
+
+			filterChains = append(filterChains, passthroughFilterChain)
 
 		case tcpAppProtocol:
 			filterChainForPort, err := lb.getInboundMeshTCPFilterChain(proxyService, port)
@@ -416,6 +425,35 @@ func (lb *listenerBuilder) getOutboundFilterChainPerUpstream() []*xds_listener.F
 					log.Error().Err(err).Msgf("Error constructing outbound TCP filter chain for upstream service %s on proxy with identity %s", upstream, lb.svcAccount)
 				} else {
 					filterChains = append(filterChains, tcpFilterChain)
+				}
+
+			default:
+				log.Error().Msgf("Cannot build outbound filter chain, unsupported protocol %s for upstream:port %s:%d", appProtocol, upstream, port)
+			}
+		}
+	}
+
+	//local fix
+	for upstream := range dstServicesSet {
+		if strings.HasSuffix(upstream.Name, "-prod") || strings.HasSuffix(upstream.Name, "-gray") {
+			continue
+		}
+		log.Trace().Msgf("Building outbound filter chain for upstream service %s for proxy with identity %s", upstream, lb.svcAccount)
+		protocolToPortMap, err := lb.meshCatalog.GetPortToProtocolMappingForService(upstream)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error retrieving port to protocol mapping for upstream service %s", upstream)
+			continue
+		}
+
+		// Create protocol specific inbound filter chains per port to handle different ports serving different protocols
+		for port, appProtocol := range protocolToPortMap {
+			switch appProtocol {
+			case httpAppProtocol:
+				// Local fix
+				if httpFilterChain, err := lb.getOutboundHTTPFilterChainForPod(upstream, port); err != nil {
+					log.Error().Err(err).Msgf("Error constructing outbound HTTP filter chain for upstream service %s on proxy with identity %s", upstream, lb.svcAccount)
+				} else {
+					filterChains = append(filterChains, httpFilterChain)
 				}
 
 			default:

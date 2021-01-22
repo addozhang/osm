@@ -82,6 +82,9 @@ func NewResponse(catalog catalog.MeshCataloger, proxy *envoy.Proxy, _ *xds_disco
 		}
 	}
 
+	//Local fix: to attach address in HOST header
+	aggregateRoutesByAddress(outboundAggregatedRoutesByHostnames, proxyServiceName.Namespace, allTrafficSplits, catalog)
+
 	if err = updateRoutesForIngress(proxyServiceName, catalog, inboundAggregatedRoutesByHostnames); err != nil {
 		return nil, err
 	}

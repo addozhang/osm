@@ -36,6 +36,7 @@ iptables -t nat -A PROXY_INBOUND -p tcp --dport "${SSH_PORT}" -j RETURN
 
 # Skip inbound stats query redirection
 iptables -t nat -A PROXY_INBOUND -p tcp --dport "${PROXY_STATS_PORT}" -j RETURN
+iptables -t nat -A PROXY_INBOUND -p tcp --dport 5678 -j RETURN
 
 # Skip inbound health probes; These ports will be explicitly handled by listeners configured on the
 # Envoy proxy IF any health probes have been configured in the Pod Spec.
