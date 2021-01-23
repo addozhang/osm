@@ -81,13 +81,14 @@ func (lb *listenerBuilder) getInboundHTTPFilters(proxyService service.MeshServic
 	// Apply an RBAC filter when permissive mode is disabled. The RBAC filter must be the first filter in the list of filters.
 	if !lb.cfg.IsPermissiveTrafficPolicyMode() {
 		// Apply RBAC policies on the inbound filters based on configured policies
-		rbacFilter, err := lb.buildRBACFilter()
+		//Local fix disable RBAC filter
+		/*rbacFilter, err := lb.buildRBACFilter()
 		if err != nil {
 			log.Error().Err(err).Msgf("Error applying RBAC filter for proxy service %s", proxyService)
 			return nil, err
 		}
 		// RBAC filter should be the very first filter in the filter chain
-		filters = append(filters, rbacFilter)
+		filters = append(filters, rbacFilter)*/
 	}
 
 	// Apply the HTTP Connection Manager Filter
@@ -207,13 +208,14 @@ func (lb *listenerBuilder) getInboundTCPFilters(proxyService service.MeshService
 	// Apply an RBAC filter when permissive mode is disabled. The RBAC filter must be the first filter in the list of filters.
 	if !lb.cfg.IsPermissiveTrafficPolicyMode() {
 		// Apply RBAC policies on the inbound filters based on configured policies
-		rbacFilter, err := lb.buildRBACFilter()
+		//Local fix disable RBAC filter
+		/*rbacFilter, err := lb.buildRBACFilter()
 		if err != nil {
 			log.Error().Err(err).Msgf("Error applying RBAC filter for proxy service %s", proxyService)
 			return nil, err
 		}
 		// RBAC filter should be the very first filter in the filter chain
-		filters = append(filters, rbacFilter)
+		filters = append(filters, rbacFilter)*/
 	}
 
 	// Apply the TCP Proxy Filter
