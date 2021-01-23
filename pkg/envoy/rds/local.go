@@ -7,15 +7,26 @@ import (
 	"github.com/openservicemesh/osm/pkg/service"
 	"github.com/openservicemesh/osm/pkg/trafficpolicy"
 	split "github.com/servicemeshinterface/smi-sdk-go/pkg/apis/split/v1alpha2"
+	"strings"
 )
 
 //This function will attach pod ips to specified virtual_host.
 //1. if virtual_host is route's root service, will attach ips to it
 //2. if route's backend service, will NOT attach ips to it
 //3. if neither two, will attache to one of them
-func aggregateRoutesByAddress(outboundAggregatedRoutesByHostnames map[string]map[string]trafficpolicy.RouteWeightedClusters, namespace string, allTrafficSplits []*split.TrafficSplit, catalog catalog.MeshCataloger) {
+func aggregateRoutesByAddress(outboundAggregatedRoutesByHostnames map[string]map[string]trafficpolicy.RouteWeightedClusters, allTrafficSplits []*split.TrafficSplit, catalog catalog.MeshCataloger) {
 	allAddresses := set.NewSet()
 	for hostname, routePolicyWeightedCluster := range outboundAggregatedRoutesByHostnames {
+		var namespace string
+		for _, cluster := range routePolicyWeightedCluster {
+			if cluster.WeightedClusters.Cardinality() > 0 {
+				for v := range cluster.WeightedClusters.Iterator().C {
+					c := v.(service.WeightedCluster)
+					namespace = strings.Split(c.ClusterName.String(), "/")[0]
+					break
+				}
+			}
+		}
 		hostService := service.MeshService{
 			Namespace: namespace,
 			Name:      hostname,
