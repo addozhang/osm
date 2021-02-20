@@ -1,12 +1,17 @@
 package injector
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 )
 
 func getInitContainerSpec(containerName string, containerImage string, outboundIPRangeExclusionList []string) corev1.Container {
+	cpuReq, _ := resource.ParseQuantity("50m")
+	cpuLmt, _ := resource.ParseQuantity("50m")
+	memReq, _ := resource.ParseQuantity("100Mi")
+	memLmt, _ := resource.ParseQuantity("100Mi")
 	iptablesInitCommandsList := generateIptablesCommands(outboundIPRangeExclusionList)
 	iptablesInitCommand := strings.Join(iptablesInitCommandsList, " && ")
 
@@ -24,6 +29,16 @@ func getInitContainerSpec(containerName string, containerImage string, outboundI
 		Args: []string{
 			"-c",
 			iptablesInitCommand,
+		},
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    cpuLmt,
+				corev1.ResourceMemory: memLmt,
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    cpuReq,
+				corev1.ResourceMemory: memReq,
+			},
 		},
 	}
 }

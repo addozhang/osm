@@ -92,7 +92,7 @@ var _ = Describe("AggregateRoutesByDomain", func() {
 			expectedDomains := set.NewSet("bookstore.mesh")
 
 			for _, routePolicy := range routePolicies {
-				aggregateRoutesByHost(domainRoutesMap, routePolicy, weightedCluster, "bookstore.mesh")
+				aggregateRoutesByAddr(domainRoutesMap, routePolicy, weightedCluster, "bookstore.mesh")
 			}
 			Expect(domainRoutesMap).NotTo(Equal(nil))
 			Expect(len(domainRoutesMap)).To(Equal(1))
@@ -127,7 +127,7 @@ var _ = Describe("AggregateRoutesByDomain", func() {
 			weightedClustersMap.Add(weightedCluster)
 			expectedDomains := set.NewSet("bookstore.mesh")
 
-			aggregateRoutesByHost(domainRoutesMap, routePolicy, weightedCluster, "bookstore.mesh")
+			aggregateRoutesByAddr(domainRoutesMap, routePolicy, weightedCluster, "bookstore.mesh")
 			Expect(domainRoutesMap).NotTo(Equal(nil))
 			Expect(len(domainRoutesMap)).To(Equal(1))
 			Expect(len(domainRoutesMap["bookstore"])).To(Equal(3))
@@ -156,7 +156,7 @@ var _ = Describe("AggregateRoutesByDomain", func() {
 			weightedClustersMap.Add(weightedCluster)
 			expectedDomains := set.NewSet("bookstore.mesh")
 
-			aggregateRoutesByHost(domainRoutesMap, routePolicy, weightedCluster, "bookstore.mesh")
+			aggregateRoutesByAddr(domainRoutesMap, routePolicy, weightedCluster, "bookstore.mesh")
 			Expect(domainRoutesMap).NotTo(Equal(nil))
 			Expect(len(domainRoutesMap)).To(Equal(1))
 			Expect(len(domainRoutesMap["bookstore"])).To(Equal(3))

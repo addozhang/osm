@@ -6,7 +6,6 @@ import (
 	xds_cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
 	xds_core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	xds_endpoint "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -26,21 +25,23 @@ const (
 // getUpstreamServiceCluster returns an Envoy Cluster corresponding to the given upstream service
 func getUpstreamServiceCluster(upstreamSvc, downstreamSvc service.MeshService, cfg configurator.Configurator) (*xds_cluster.Cluster, error) {
 	clusterName := upstreamSvc.String()
+	/* local fix - disable cluster tls
 	marshalledUpstreamTLSContext, err := ptypes.MarshalAny(
 		envoy.GetUpstreamTLSContext(downstreamSvc, upstreamSvc))
 	if err != nil {
 		return nil, err
-	}
+	}*/
 
 	remoteCluster := &xds_cluster.Cluster{
 		Name:           clusterName,
 		ConnectTimeout: ptypes.DurationProto(clusterConnectTimeout),
+		/* local fix - disable cluster tls
 		TransportSocket: &xds_core.TransportSocket{
 			Name: wellknown.TransportSocketTls,
 			ConfigType: &xds_core.TransportSocket_TypedConfig{
 				TypedConfig: marshalledUpstreamTLSContext,
 			},
-		},
+		},*/
 		ProtocolSelection:    xds_cluster.Cluster_USE_DOWNSTREAM_PROTOCOL,
 		Http2ProtocolOptions: &xds_core.Http2ProtocolOptions{},
 	}

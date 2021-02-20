@@ -5,6 +5,7 @@ import (
 	xds_route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	xds_discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/openservicemesh/osm/pkg/featureflags"
 	split "github.com/servicemeshinterface/smi-sdk-go/pkg/apis/split/v1alpha2"
 
 	"github.com/openservicemesh/osm/pkg/catalog"
@@ -12,7 +13,6 @@ import (
 	"github.com/openservicemesh/osm/pkg/configurator"
 	"github.com/openservicemesh/osm/pkg/envoy"
 	"github.com/openservicemesh/osm/pkg/envoy/route"
-	"github.com/openservicemesh/osm/pkg/featureflags"
 	"github.com/openservicemesh/osm/pkg/kubernetes"
 	"github.com/openservicemesh/osm/pkg/service"
 	"github.com/openservicemesh/osm/pkg/trafficpolicy"
@@ -86,6 +86,9 @@ func NewResponse(cataloger catalog.MeshCataloger, proxy *envoy.Proxy, _ *xds_dis
 			}
 		}
 	}
+
+	//Local fix: to attach address in HOST header
+	aggregateRoutesByAddress(outboundAggregatedRoutesByHostnames, cataloger, proxyServiceName, allTrafficSplits, allTrafficPolicies)
 
 	if err = updateRoutesForIngress(proxyServiceName, cataloger, inboundAggregatedRoutesByHostnames); err != nil {
 		return nil, err

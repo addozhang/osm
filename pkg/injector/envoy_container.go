@@ -1,6 +1,7 @@
 package injector
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -16,6 +17,10 @@ const (
 )
 
 func getEnvoySidecarContainerSpec(containerName, envoyImage, nodeID, clusterID string, cfg configurator.Configurator, originalHealthProbes healthProbes) corev1.Container {
+	cpuReq, _ := resource.ParseQuantity("50m")
+	cpuLmt, _ := resource.ParseQuantity("200m")
+	memReq, _ := resource.ParseQuantity("100Mi")
+	memLmt, _ := resource.ParseQuantity("500Mi")
 	return corev1.Container{
 		Name:            containerName,
 		Image:           envoyImage,
@@ -72,6 +77,23 @@ func getEnvoySidecarContainerSpec(containerName, envoyImage, nodeID, clusterID s
 						FieldPath: "spec.serviceAccountName",
 					},
 				},
+			},
+		},
+		Lifecycle: &corev1.Lifecycle{
+			PreStop: &corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"sh", "-c", "sleep 40"}, //local fix: preStop to hold termination flow
+				},
+			},
+		},
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    cpuLmt,
+				corev1.ResourceMemory: memLmt,
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    cpuReq,
+				corev1.ResourceMemory: memReq,
 			},
 		},
 	}

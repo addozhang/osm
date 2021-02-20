@@ -7,6 +7,8 @@ import (
 	xds_tcp_proxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/openservicemesh/osm/pkg/service"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/openservicemesh/osm/pkg/constants"
 	"github.com/openservicemesh/osm/pkg/envoy"
@@ -119,6 +121,33 @@ func buildEgressFilterChain() (*xds_listener.FilterChain, error) {
 
 	return &xds_listener.FilterChain{
 		Name: outboundEgressFilterChainName,
+		Filters: []*xds_listener.Filter{
+			{
+				Name:       wellknown.TCPProxy,
+				ConfigType: &xds_listener.Filter_TypedConfig{TypedConfig: marshalledTCPProxy},
+			},
+		},
+	}, nil
+}
+
+func buildInboundPassthroughFilterChain(proxyService service.MeshService, port uint32) (*xds_listener.FilterChain, error) {
+	tcpProxy := &xds_tcp_proxy.TcpProxy{
+		StatPrefix:       envoy.OutboundPassthroughCluster,
+		ClusterSpecifier: &xds_tcp_proxy.TcpProxy_Cluster{Cluster: envoy.OutboundPassthroughCluster},
+		//ClusterSpecifier: &xds_tcp_proxy.TcpProxy_Cluster{Cluster: envoy.GetLocalClusterNameForService(proxyService)},
+	}
+	marshalledTCPProxy, err := ptypes.MarshalAny(tcpProxy)
+	if err != nil {
+		log.Error().Err(err).Msgf("Error marshalling TcpProxy object for egress HTTPS filter chain")
+		return nil, err
+	}
+
+	return &xds_listener.FilterChain{
+		FilterChainMatch: &xds_listener.FilterChainMatch{
+			DestinationPort: &wrapperspb.UInt32Value{
+				Value: port,
+			},
+		},
 		Filters: []*xds_listener.Filter{
 			{
 				Name:       wellknown.TCPProxy,
