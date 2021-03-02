@@ -40,6 +40,11 @@ var iptablesOutboundStaticRules = []string{
 	// Skip localhost traffic, doesn't need to be routed via the proxy
 	"iptables -t nat -A PROXY_OUTPUT -d 127.0.0.1/32 -j RETURN",
 
+	//local fix: not proxy traffic via 8888
+	fmt.Sprintf("iptables -t nat -A PROXY_OUTPUT -p tcp --dport %d -j RETURN", 8888),
+	//local fix: not proxy traffic via 5678
+	fmt.Sprintf("iptables -t nat -A PROXY_OUTPUT -p tcp --dport %d -j RETURN", 5678),
+
 	// Redirect remaining outbound traffic to Envoy
 	"iptables -t nat -A PROXY_OUTPUT -j PROXY_REDIRECT",
 }
