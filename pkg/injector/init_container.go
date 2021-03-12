@@ -8,10 +8,10 @@ import (
 )
 
 func getInitContainerSpec(containerName string, containerImage string, outboundIPRangeExclusionList []string) corev1.Container {
-	cpuReq, _ := resource.ParseQuantity("50m")
-	cpuLmt, _ := resource.ParseQuantity("50m")
-	memReq, _ := resource.ParseQuantity("100Mi")
-	memLmt, _ := resource.ParseQuantity("100Mi")
+	cpuReq, _ := resource.ParseQuantity("10m")
+	cpuLmt, _ := resource.ParseQuantity("30m")
+	memReq, _ := resource.ParseQuantity("20Mi")
+	memLmt, _ := resource.ParseQuantity("50Mi")
 	iptablesInitCommandsList := generateIptablesCommands(outboundIPRangeExclusionList)
 	iptablesInitCommand := strings.Join(iptablesInitCommandsList, " && ")
 

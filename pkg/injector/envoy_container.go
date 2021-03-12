@@ -17,10 +17,10 @@ const (
 )
 
 func getEnvoySidecarContainerSpec(containerName, envoyImage, nodeID, clusterID string, cfg configurator.Configurator, originalHealthProbes healthProbes) corev1.Container {
-	cpuReq, _ := resource.ParseQuantity("50m")
-	cpuLmt, _ := resource.ParseQuantity("200m")
-	memReq, _ := resource.ParseQuantity("100Mi")
-	memLmt, _ := resource.ParseQuantity("500Mi")
+	cpuReq, _ := resource.ParseQuantity("200m")
+	cpuLmt, _ := resource.ParseQuantity("500m")
+	memReq, _ := resource.ParseQuantity("50Mi")
+	memLmt, _ := resource.ParseQuantity("200Mi")
 	return corev1.Container{
 		Name:            containerName,
 		Image:           envoyImage,
