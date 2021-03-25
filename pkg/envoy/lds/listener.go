@@ -61,6 +61,8 @@ func (lb *listenerBuilder) newOutboundListener() (*xds_listener.Listener, error)
 }
 
 func newInboundListener() *xds_listener.Listener {
+	//local fix: add a proxy filter chain
+	defaultFilterChain, _ := buildEgressFilterChain()
 	return &xds_listener.Listener{
 		Name:             inboundListenerName,
 		Address:          envoy.GetAddress(constants.WildcardIPAddr, constants.EnvoyInboundListenerPort),
@@ -77,6 +79,7 @@ func newInboundListener() *xds_listener.Listener {
 				Name: wellknown.OriginalDestination,
 			},
 		},
+		DefaultFilterChain: defaultFilterChain,
 	}
 }
 

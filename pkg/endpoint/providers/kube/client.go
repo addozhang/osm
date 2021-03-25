@@ -90,6 +90,16 @@ func (c Client) ListEndpointsForIdentity(sa service.K8sServiceAccount) []endpoin
 			ept := endpoint.Endpoint{IP: ip}
 			endpoints = append(endpoints, ept)
 		}
+		// local fix: for pod ips field not exist in ancient version
+		if pod.Status.PodIPs == nil {
+			ip := net.ParseIP(pod.Status.PodIP)
+			if ip == nil {
+				log.Error().Msgf("[%s] Error parsing IP address %s", c.providerIdent, pod.Status.PodIP)
+				break
+			}
+			ept := endpoint.Endpoint{IP: ip}
+			endpoints = append(endpoints, ept)
+		}
 	}
 	return endpoints
 }

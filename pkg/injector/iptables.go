@@ -40,6 +40,11 @@ var iptablesOutboundStaticRules = []string{
 	// Skip localhost traffic, doesn't need to be routed via the proxy
 	"iptables -t nat -A PROXY_OUTPUT -d 127.0.0.1/32 -j RETURN",
 
+	// local fix: not proxy traffic via 8888
+	fmt.Sprintf("iptables -t nat -A PROXY_OUTPUT -p tcp --dport %d -j RETURN", 8888),
+	// local fix: not proxy traffic via 5678
+	fmt.Sprintf("iptables -t nat -A PROXY_OUTPUT -p tcp --dport %d -j RETURN", 5678),
+
 	// Redirect remaining outbound traffic to Envoy
 	"iptables -t nat -A PROXY_OUTPUT -j PROXY_REDIRECT",
 }
@@ -54,6 +59,8 @@ var iptablesInboundStaticRules = []string{
 
 	// Skip metrics query traffic being directed to Envoy's inbound prometheus listener port
 	fmt.Sprintf("iptables -t nat -A PROXY_INBOUND -p tcp --dport %d -j RETURN", constants.EnvoyPrometheusInboundListenerPort),
+	// local fix: not proxy traffic via 5678
+	fmt.Sprintf("iptables -t nat -A PROXY_INBOUND -p tcp --dport %d -j RETURN", 5678),
 
 	// Skip inbound health probes; These ports will be explicitly handled by listeners configured on the
 	// Envoy proxy IF any health probes have been configured in the Pod Spec.
