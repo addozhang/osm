@@ -2,6 +2,7 @@ package injector
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -31,6 +32,11 @@ func getEnvoySidecarContainerSpec(pod *corev1.Pod, envoyImage string, cfg config
 			break
 		}
 	}
+	// local fix: set resource limitation
+	cpuReq, _ := resource.ParseQuantity("200m")
+	cpuLmt, _ := resource.ParseQuantity("500m")
+	memReq, _ := resource.ParseQuantity("50Mi")
+	memLmt, _ := resource.ParseQuantity("200Mi")
 
 	return corev1.Container{
 		Name:            constants.EnvoyContainerName,
@@ -96,6 +102,23 @@ func getEnvoySidecarContainerSpec(pod *corev1.Pod, envoyImage string, cfg config
 						FieldPath: "spec.serviceAccountName",
 					},
 				},
+			},
+		},
+		Lifecycle: &corev1.Lifecycle{
+			PreStop: &corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"sh", "-c", "sleep 40"}, //local fix: preStop to hold termination flow
+				},
+			},
+		},
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    cpuLmt,
+				corev1.ResourceMemory: memLmt,
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    cpuReq,
+				corev1.ResourceMemory: memReq,
 			},
 		},
 	}

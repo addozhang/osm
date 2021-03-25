@@ -17,7 +17,8 @@ import (
 // NewIngressClient implements ingress.Monitor and creates the Kubernetes client to monitor Ingress resources.
 func NewIngressClient(kubeClient kubernetes.Interface, kubeController k8s.Controller, stop chan struct{}, cfg configurator.Configurator) (Monitor, error) {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, k8s.DefaultKubeEventResyncInterval)
-	informer := informerFactory.Networking().V1beta1().Ingresses().Informer()
+	// local fix: switch to extension/v1beta1
+	informer := informerFactory.Extensions().V1beta1().Ingresses().Informer()
 
 	client := Client{
 		informer:       informer,

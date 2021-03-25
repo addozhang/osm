@@ -81,7 +81,14 @@ func (mc *MeshCatalog) listOutboundTrafficPoliciesForTrafficSplits(sourceNamespa
 		policy.Routes = []*trafficpolicy.RouteWeightedClusters{rwc}
 
 		if apexServices.Contains(svc) {
-			log.Error().Msgf("Skipping Traffic Split policy %s in namespaces %s as there is already a traffic split policy for apex service %v", split.Name, split.Namespace, svc)
+			// local fix: accept more than one splits of same root service
+			for _, policy := range outboundPoliciesFromSplits {
+				if len(policy.Routes) > 0 {
+					for _, cluster := range weightedClusters {
+						policy.Routes[0].WeightedClusters.Add(cluster)
+					}
+				}
+			}
 		} else {
 			outboundPoliciesFromSplits = append(outboundPoliciesFromSplits, policy)
 			apexServices.Add(svc)
